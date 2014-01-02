@@ -15,12 +15,11 @@ randomString = (length = 32) ->
 
  string
 
-logUser = (msgs) ->
+logUser = (msg) ->
  console.log "#{cId}[LOG]", msg
 
 logError = (err, data) ->
- console.error err
- console.error data
+ console.error "#{cId}[ERROR]#{err}", data
 
 debug = (data) ->
  console.log "#{cId}[DEBUG]", data

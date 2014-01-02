@@ -1,17 +1,13 @@
 net = require 'net'
 Socket = (require './socket').Socket
+Thread = (require './thread').Thread
 
-class JavaThread extends SocketThread
+class JavaThread extends Thread
  constructor: (options) ->
-  @program = 'java'
-  @params = []
-  @env = {}
-
-  @port = 11010
-  @host = "localhost"
-
   @port = options.port
   @host = options.host
+  @server = options.server
+  @spawn = options.spawn
 
   @connected = false
   @socket = null
@@ -21,8 +17,9 @@ class JavaThread extends SocketThread
   @_connect()
 
  _connect: ->
-  @socket = new Socket()
-  @socket.onMessage @_onMessage
+  @socket = new Socket host: @host, port: @port, server: @server
+  @socket.onMessage (err, data, callback) =>
+   @_onMessage err, data, callback
   @socket.onConnected =>
    @connected = true
 
@@ -48,5 +45,6 @@ class JavaThread extends SocketThread
   msg = "#{method}\n#{JSON.stringify data}"
   @socket.send msg, (err, data) =>
    data = JSON.parse data
-   callback err, data
+   callback data.err, data.data
 
+exports.JavaThread = JavaThread

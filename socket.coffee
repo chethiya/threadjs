@@ -1,16 +1,19 @@
+net = require 'net'
 util = require './util'
 logError = util.logError
-logUser util.logUser
+logUser = util.logUser
 
 _START = '[START]'
 _END = '[END]'
 _CALLBACK = '1'
 _REQUEST = '0'
+RECONNECT_TIMEOUT = 5000
 
 class Socket
- constructor: ->
+ constructor: (options) ->
   @host = options.host
   @port = options.port
+  @server = options.server
   @connected = false
   @connectCbs = []
   @messageCb = null
@@ -21,19 +24,46 @@ class Socket
   @sending = false
   @dataBuffer = ''
 
- _connect: ->
-  logUser "Connecting to the socket #{@host}:#{@port}"
-  @socket = net.createConnection(@port, @host)
-  @socket.setEncoding 'utf8'
-  @socket.on 'connect', ->
-   logUser "Connected to the socket #{@host}:#{@port}"
+ _createServer: ->
+  logUser "Creating the server #{@host}:#{@port}"
+  server = net.createServer (socket) =>
+   @socket = socket
+   @connected = true
+   logUser 'client connected'
+   @socket.setEncoding 'utf8'
    cb() for cb in @connectCbs
 
-  @socket.on 'data', @_onData
+   @socket.on 'data', (data) =>
+    @_onData data
 
-  @socket.on 'error', (error) ->
+   @socket.on 'end', ->
+    logUser 'client disconnected'
+    @connected = false
+
+  server.listen @port, ->
+   logUser 'server bound'
+
+ _connect: ->
+  if @server
+   @_createServer()
+   return
+
+  logUser "Connecting to the socket #{@host}:#{@port}"
+  @socket = net.createConnection @port, @host
+  @socket.setEncoding 'utf8'
+  @socket.on 'connect', =>
+   logUser "Connected to the socket #{@host}:#{@port}"
+   @connected = true
+   cb() for cb in @connectCbs
+
+  @socket.on 'data', (data) =>
+   @_onData data
+
+  @socket.on 'error', (error) =>
    logUser "Error connecting to the socket #{@host}:#{@port}"
-   setTimeout _connect, 10000
+   recurse = =>
+    @_connect()
+   setTimeout recurse, RECONNECT_TIMEOUT
 
  onConnected: (cb) ->
   if @connected
@@ -46,10 +76,11 @@ class Socket
 
 
  _onData: (data) ->
+  #TODO socket pause/resume
   @dataBuffer += data.toString()
   @_processBuffer()
 
- _processBuffer = () ->
+ _processBuffer: () ->
   start = @dataBuffer.indexOf _START
   end = @dataBuffer.indexOf _END
 
@@ -81,7 +112,7 @@ class Socket
 
   @_onResponse msg
 
- _onResponse = (msg) ->
+ _onResponse: (msg) ->
   data =
    reqId: null
    data: null
@@ -104,20 +135,21 @@ class Socket
 
 
    if isCallback
-    if calls[reqId]?
-     cb = calls[reqId]
-     cb err, msg
-     delete calls[reqId]
+    if @calls[reqId]?
+     cb = @calls[reqId].callback
+     if cb?
+      cb err, msg
+     delete @calls[reqId]
     else
      logError "No callbacked reqId", {reqId: reqId, msg: msg}
    else
     if @messageCb?
      @messageCb err, msg, (data) =>
-      data = _START + _CALLABCK + reqId + "\n" + data + _END
+      data = _START + _CALLBACK + reqId + "\n" + data + _END
       @queue.push data
       @_processQueue()
   catch e
-   logError 'Parse Error', e
+   logError 'Parse Error', e.stack
    logError 'Packet', msg
    err = 'Parse Error'
 
@@ -132,19 +164,21 @@ class Socket
    reqId: reqId
 
   @queue.push data
-
   @_processQueue()
 
- _processQueue = ->
+ _processQueue: ->
   if @sending
    return
 
-  if queue.length == 0
+  if @queue.length == 0
    return
 
   @sending = true
-  currentReq = queue.shift()
+  currentReq = @queue.shift()
 
   @socket.write currentReq, 'utf8', =>
    @sending = false
-   _processQueue()
+   @_processQueue()
+
+
+exports.Socket = Socket
