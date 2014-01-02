@@ -1,6 +1,9 @@
 JavaThread = (require './java_thread').JavaThread
 
 client = new JavaThread server: false, spawn: true
+client.onRecord = (data, callback) ->
+ console.log data
+ callback()
 
 client.onStarted (err, data) ->
  console.log "client started : ", err

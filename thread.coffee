@@ -11,7 +11,7 @@ class Thread
   @spwan = true unless @spawn?
   @server = true unless @server?
   @program = 'coffee' unless @program?
-  @params = ["./node_server/test.coffee"] unless @params?
+  @params = ["./node_server/server.coffee"] unless @params?
   @env = process.env unless @env?
   @port = 11010 unless @port?
   @host = "localhost" unless @host?
