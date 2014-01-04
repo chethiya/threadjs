@@ -145,7 +145,7 @@ class Socket
    else
     if @messageCb?
      @messageCb err, msg, (data) =>
-      data = _START + _CALLBACK + reqId + "\n" + data + _END
+      data = _START + _CALLBACK + reqId + "\n\n" + data + _END + '\n'
       @queue.push data
       @_processQueue()
   catch e
@@ -157,7 +157,7 @@ class Socket
   reqId = 0
   reqId = util.randomString() while reqId is 0 or @calls[reqId]?
 
-  data = _START + _REQUEST + reqId + "\n" + data + _END
+  data = _START + _REQUEST + reqId + "\n" + data + _END + '\n'
 
   @calls[reqId] =
    callback: callback

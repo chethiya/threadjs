@@ -9,7 +9,7 @@ server.getRecord = (data, callback) ->
  callback null, obj
 
  send = (n) ->
-  return if n > 100000
+  return if n > 10000
   server.send 'onRecord', obj, ->
   call = ->
    send n+1

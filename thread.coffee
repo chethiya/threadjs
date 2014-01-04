@@ -15,6 +15,7 @@ class Thread
   @env = process.env unless @env?
   @port = 11010 unless @port?
   @host = "localhost" unless @host?
+  @cwd = "./" unless @cwd?
 
   @started = false
   @working = false
@@ -23,7 +24,7 @@ class Thread
 
  _init: ->
   if @spawn
-   @process = spawn @program, @params, env: @env, stdio: "inherit"
+   @process = spawn @program, @params, env: @env, stdio: "inherit", cwd: @cwd
 
   start = =>
    @send START, {}, (err, data) =>

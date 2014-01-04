@@ -1,6 +1,8 @@
 net = require 'net'
 Socket = (require './socket').Socket
 Thread = (require './thread').Thread
+util = (require './util')
+logError = util.logError
 
 class JavaThread extends Thread
  constructor: (options) ->
@@ -8,6 +10,9 @@ class JavaThread extends Thread
   @host = options.host
   @server = options.server
   @spawn = options.spawn
+  @program = options.program
+  @params = options.params
+  @cwd = options.cwd
 
   @connected = false
   @socket = null
