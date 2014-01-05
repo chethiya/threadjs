@@ -1,6 +1,6 @@
 JavaThread = (require './java_thread').JavaThread
 
-client = new JavaThread server: true, spawn: true, cwd: "./java/threadjs", program: "java", params: ["-cp", "target/uber-threadjs-1.0-SNAPSHOT.jar", "org.forestpin.threadjs.App"]
+client = new JavaThread server: true, spawn: false, cwd: "./java/threadjs", program: "java", params: ["-cp", "target/uber-threadjs-1.0-SNAPSHOT.jar", "org.forestpin.threadjs.App"]
 
 #params: ["exec:java", "-Dexec.mainClass=\"org.forestpin.threadjs.App\""],
 #params: ["-f=\"java/threadjs/\"", "clean", "install"]
