@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 
+import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
 
 public class ThreadJSSocket {
@@ -22,8 +23,8 @@ public class ThreadJSSocket {
     private BufferedReader in;
     Thread inThread, outThread;
 
-    private boolean started = false;
-    HashMap<String, Callback> calls = new HashMap<String, Callback>(); //sync
+    private boolean connected = false;
+    HashMap<String, Callback> calls = new HashMap<String, Callback>(); // sync
 
     ThreadJSSocket(ThreadJS main, String host, int port) {
         this.main = main;
@@ -38,8 +39,8 @@ public class ThreadJSSocket {
 
     private String getRandomString(int length) {
         StringBuffer str = new StringBuffer();
-        for (int i=0; i<32; ++i) {
-            int p = (int) Math.floor(Math.random()*length);
+        for (int i = 0; i < 32; ++i) {
+            int p = (int) Math.floor(Math.random() * length);
             str.append(CHARS.charAt(p));
         }
         return str.toString();
@@ -49,7 +50,8 @@ public class ThreadJSSocket {
         String res;
         while (true) {
             res = getRandomString();
-            if (calls.get(res) == null) break;
+            if (calls.get(res) == null)
+                break;
         }
         return res;
     }
@@ -80,7 +82,6 @@ public class ThreadJSSocket {
     private void onMessage(String msg) {
         // TODO call the callback obj in case of callback. If not send call the
         // method!
-        System.out.println("Messsage received: " + msg);
         JSONObject json = JSONObject.fromObject(msg);
         if (!json.has("callback")) {
             System.err.println("No callback: " + msg);
@@ -88,34 +89,55 @@ public class ThreadJSSocket {
         }
         boolean callback = json.optBoolean("callback");
         final String reqId = json.optString("reqId", null);
-        JSONObject data = json.optJSONObject("data");
+        final JSONObject data = json.optJSONObject("data");
         if (data == null) {
             System.err.println("No data object in : " + msg);
             return;
         }
         if (callback) {
             if (reqId != null && calls.get(reqId) != null) {
-                Callback cb = calls.get(reqId);
-                String err = data.optString("err", null);
-                JSONObject d = data.optJSONObject("data");
-                cb.callback(err, d);
+                final Callback cb = calls.get(reqId);
+                final String err;
+                if (data.optJSONObject("err") == null) {
+                    err = null;
+                } else {
+                    err = data.optString("err", null);
+                }
+                final JSONObject d = data.optJSONObject("data");
+                if (cb != Callback.EMPTY) {
+                    Thread newThread = new Thread() {
+                        @Override
+                        public void run() {
+                            cb.callback(err, d);
+                        }
+                    };
+                    newThread.start();
+                }
                 calls.remove(reqId);
             } else {
                 System.err.println("There is no callback for reqId: " + reqId);
             }
         } else {
-            main.onMessage(data, new Callback() {
-                public void callback(String err, JSONObject data) {
-                    JSONObject m = new JSONObject();
-                    JSONObject d = new JSONObject();
-                    d.element("err", err);
-                    d.element("data", data);
-                    m.element("callback", true);
-                    m.element("reqId", reqId);
-                    m.element("data", d);
-                    placeInOut(m);
+            Thread newProcess = new Thread() {
+                @Override
+                public void run() {
+                    main.onMessage(data, new Callback() {
+                        public void callback(String err, JSONObject data) {
+                            JSONObject m = new JSONObject();
+                            JSONObject d = new JSONObject();
+
+                            d.element("err", (err == null ? JSONNull.getInstance() : err));
+                            d.element("data", data);
+                            m.element("callback", true);
+                            m.element("reqId", reqId);
+                            m.element("data", d);
+                            placeInOut(m);
+                        }
+                    });
                 }
-            });
+            };
+            newProcess.start();
+
         }
     }
 
@@ -139,30 +161,34 @@ public class ThreadJSSocket {
         }
 
         try {
-            //TODO: Set encoding to utf8
+            // TODO: Set encoding to utf8
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            started = true;
+            connected = true;
         } catch (IOException e) {
             System.err.println("Error while establishing input/output streams to nodejs");
             e.printStackTrace();
         }
         startInThread();
-        startOutThread();
     }
 
     private void startInThread() {
+        System.out.println("calling new thread");
         inThread = new Thread() {
             @Override
             public void run() {
+                System.out.println("Starting read thread");
                 try {
-                    // TODO using a hacky algorithm to decode message. Using new line
-                    // characters assuming there are new line character at the end of
+                    // TODO using a hacky algorithm to decode message. Using new
+                    // line
+                    // characters assuming there are new line character at the
+                    // end of
                     // each message
                     boolean started = false;
                     String str;
                     String msg = "";
                     while ((str = in.readLine()) != null) {
+                        System.out.println("Read: " + str);
                         if (isNewMessage(str)) {
                             msg = "";
                             str = str.substring(_START.length());
@@ -187,28 +213,25 @@ public class ThreadJSSocket {
                 }
             }
         };
+        inThread.start();
     }
 
-    private void startOutThread() {
-        outThread = new Thread() {
-            @Override
-            public void run() {
-
-            }
-        };
-    }
-
+    // TODO debug _start not going out
     private synchronized void placeInOut(JSONObject msg) {
         String str = msg.toString();
-        out.print(_START + str + _END + "\n");
+        out.println(_START + str + _END);
     }
 
     private void close() {
-        started = false;
+        connected = false;
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 
     public void send(JSONObject json, Callback cb) {
-        if (!started) {
+        if (!connected) {
             System.err.println("Channel is closed. Can't send : " + json.toString());
             return;
         }
@@ -217,8 +240,10 @@ public class ThreadJSSocket {
         msg.element("callback", false);
         msg.element("reqId", reqId);
         msg.element("data", json);
+        if (cb == null) {
+            cb = Callback.EMPTY;
+        }
         calls.put(reqId, cb);
         placeInOut(msg);
     }
 }
-

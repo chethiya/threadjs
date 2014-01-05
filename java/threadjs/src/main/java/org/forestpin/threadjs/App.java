@@ -1,5 +1,6 @@
 package org.forestpin.threadjs;
 
+import net.sf.json.JSONObject;
 
 /**
  * Hello world!
@@ -18,8 +19,11 @@ public class App {
     public static void main(String[] args) {
 
         ThreadJS node = new ThreadJS();
-
-
+        node.onStarted(new Callback() {
+            public void callback(String err, JSONObject data) {
+                System.out.println("Server communication is started and initialized successfully.");
+            }
+        });
 
         /*
         SendThread t = new SendThread();
