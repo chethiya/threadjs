@@ -1,6 +1,7 @@
 spawn = (require 'child_process').spawn
 util = require './util'
 logError = util.logError
+debug = util.debug
 
 PING = "_ping"
 START = "_start"
@@ -49,12 +50,21 @@ class Thread
   check()
   cid = setInterval check, PING_INTERVAL
 
- _onMessage: (err, data, callback) ->
-  if this[data.method]?
-   this[data.method] data.data, callback
+ _onMessage: (data, callback) ->
+  unless data.method?
+   logError "No method given", JSON.stringify data
+   callback err: "Invalid message received", data: {}
+   return
+
+  method = data.method
+  data = data.data
+
+  if this[method]?
+   this[method] data, (err, data) ->
+    callback err: err, data: data
   else
-   logError "Invalid method #{data.method}", data.data
-   callback "Invalid method #{data.method}", {}
+   logError "Invalid method #{method}", data
+   callback err: "Invalid method #{method}", data: {}
 
  _setMethods: (methods) ->
   for m in methods

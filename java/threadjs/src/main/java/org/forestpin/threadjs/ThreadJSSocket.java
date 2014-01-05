@@ -96,18 +96,23 @@ public class ThreadJSSocket {
         if (callback) {
             if (reqId != null && calls.get(reqId) != null) {
                 Callback cb = calls.get(reqId);
-                cb.callback(data);
+                String err = data.optString("err", null);
+                JSONObject d = data.optJSONObject("data");
+                cb.callback(err, d);
                 calls.remove(reqId);
             } else {
                 System.err.println("There is no callback for reqId: " + reqId);
             }
         } else {
             main.onMessage(data, new Callback() {
-                public void callback(JSONObject json) {
+                public void callback(String err, JSONObject data) {
                     JSONObject m = new JSONObject();
+                    JSONObject d = new JSONObject();
+                    d.element("err", err);
+                    d.element("data", data);
                     m.element("callback", true);
                     m.element("reqId", reqId);
-                    m.element("data", json);
+                    m.element("data", d);
                     placeInOut(m);
                 }
             });
@@ -134,6 +139,7 @@ public class ThreadJSSocket {
         }
 
         try {
+            //TODO: Set encoding to utf8
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             started = true;
@@ -194,7 +200,7 @@ public class ThreadJSSocket {
 
     private synchronized void placeInOut(JSONObject msg) {
         String str = msg.toString();
-        out.println(_START + str + _END);
+        out.print(_START + str + _END + "\n");
     }
 
     private void close() {

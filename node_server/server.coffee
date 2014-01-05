@@ -1,4 +1,6 @@
 JavaThread = (require './../java_thread').JavaThread
+util = (require './../util')
+util.setId 'Server'
 
 server = new JavaThread server: true, spawn: false
 

@@ -2,11 +2,11 @@ net = require 'net'
 util = require './util'
 logError = util.logError
 logUser = util.logUser
+debug = util.debug
 
 _START = '[START]'
 _END = '[END]'
-_CALLBACK = '1'
-_REQUEST = '0'
+
 RECONNECT_TIMEOUT = 5000
 
 class Socket
@@ -99,12 +99,11 @@ class Socket
    logError 'No start found', @dataBuffer
    @dataBuffer = ''
    return
-  else if start > 0
-   logError 'Garbage data', @dataBuffer
-   @dataBuffer = @dataBuffer.substr start
 
   if end == -1
    #Loading
+   if start > 0
+    @dataBuffer = @dataBuffer.substr start
    return
 
   msg = @dataBuffer.substr start + _START.length, end - start - _START.length
@@ -113,57 +112,58 @@ class Socket
   @_onResponse msg
 
  _onResponse: (msg) ->
-  data =
-   reqId: null
-   data: null
-  err = null
-
-  # TODO: If callback out of order invoke previous callbacks with error
-
   reqId = 0
   isCallback = true
   try
-   callbackFlag = msg.substr 0, 1
-   msg = msg.substr 1
-   throw "No callback flag" if callbackFlag.length is 0
-   isCallback = false if callbackFlag isnt _CALLBACK
+   json = JSON.parse msg
 
-   ind = msg.indexOf '\n'
-   throw "No request Id" if ind is -1
-   reqId = msg.substr 0, ind
-   msg = msg.substr ind+1
+   throw "No callback flag" unless json.callback?
+   isCallback = json.callback
 
+   throw "No request Id" unless json.reqId?
+   reqId = json.reqId
+
+   throw "No data" unless json.data?
 
    if isCallback
     if @calls[reqId]?
      cb = @calls[reqId].callback
      if cb?
-      cb err, msg
+      cb json.data
      delete @calls[reqId]
     else
      logError "No callbacked reqId", {reqId: reqId, msg: msg}
    else
     if @messageCb?
-     @messageCb err, msg, (data) =>
-      data = _START + _CALLBACK + reqId + "\n\n" + data + _END + '\n'
-      @queue.push data
+     @messageCb json.data, (d) =>
+      d =
+       callback: true
+       reqId: reqId
+       data: d
+      @sendToQueue d
       @_processQueue()
   catch e
    logError 'Parse Error', e.stack
    logError 'Packet', msg
    err = 'Parse Error'
 
+ sendToQueue: (json) ->
+  @queue.push _START + (JSON.stringify json) + _END + "\n"
+
  send: (data, callback) ->
   reqId = 0
   reqId = util.randomString() while reqId is 0 or @calls[reqId]?
 
-  data = _START + _REQUEST + reqId + "\n" + data + _END + '\n'
+  data =
+   callback: false
+   reqId: reqId
+   data: data
 
   @calls[reqId] =
    callback: callback
    reqId: reqId
 
-  @queue.push data
+  @sendToQueue data
   @_processQueue()
 
  _processQueue: ->

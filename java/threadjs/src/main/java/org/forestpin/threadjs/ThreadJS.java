@@ -55,15 +55,15 @@ public class ThreadJS {
     }
 
     public void testMethod(JSONObject data, Callback cb) {
-        cb.callback(data);
+        cb.callback(null, data);
     }
 
     public void _ping(JSONObject data, Callback cb) {
-        cb.callback(data);
+        cb.callback(null, data);
     }
 
     public void _string(JSONObject data, Callback cb) {
-        cb.callback(data);
+        cb.callback(null, data);
     }
 
 }
