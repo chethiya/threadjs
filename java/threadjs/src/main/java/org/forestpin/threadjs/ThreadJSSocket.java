@@ -21,7 +21,7 @@ public class ThreadJSSocket {
     private Socket socket = null;
     private PrintWriter out; // sync
     private BufferedReader in;
-    Thread inThread, outThread;
+    Thread inThread = null;
 
     private boolean connected = false;
     HashMap<String, Callback> calls = new HashMap<String, Callback>(); // sync
@@ -48,11 +48,14 @@ public class ThreadJSSocket {
 
     private synchronized String getId() {
         String res;
-        while (true) {
-            res = getRandomString();
-            if (calls.get(res) == null)
-                break;
+        synchronized (calls) {
+            while (true) {
+                res = getRandomString();
+                if (calls.get(res) == null)
+                    break;
+            }
         }
+
         return res;
     }
 
@@ -95,8 +98,11 @@ public class ThreadJSSocket {
             return;
         }
         if (callback) {
-            if (reqId != null && calls.get(reqId) != null) {
-                final Callback cb = calls.get(reqId);
+            final Callback cb;
+            synchronized (calls) {
+                cb = calls.get(reqId);
+            }
+            if (reqId != null && cb != null) {
                 final String err;
                 if (data.optJSONObject("err") == null) {
                     err = null;
@@ -113,7 +119,9 @@ public class ThreadJSSocket {
                     };
                     newThread.start();
                 }
-                calls.remove(reqId);
+                synchronized (calls) {
+                    calls.remove(reqId);
+                }
             } else {
                 System.err.println("There is no callback for reqId: " + reqId);
             }
@@ -164,12 +172,12 @@ public class ThreadJSSocket {
             // TODO: Set encoding to utf8
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            connected = true;
+            startInThread();
         } catch (IOException e) {
             System.err.println("Error while establishing input/output streams to nodejs");
             e.printStackTrace();
         }
-        startInThread();
+
     }
 
     private void startInThread() {
@@ -188,7 +196,6 @@ public class ThreadJSSocket {
                     String str;
                     String msg = "";
                     while ((str = in.readLine()) != null) {
-                        System.out.println("Read: " + str);
                         if (isNewMessage(str)) {
                             msg = "";
                             str = str.substring(_START.length());
@@ -213,13 +220,23 @@ public class ThreadJSSocket {
                 }
             }
         };
-        inThread.start();
+    }
+
+    public void start() {
+        if (inThread == null) {
+            System.err.println("Can't start hearing on socket. Socket is not connected ");
+        } else {
+            connected = true;
+            inThread.start();
+        }
     }
 
     // TODO debug _start not going out
-    private synchronized void placeInOut(JSONObject msg) {
+    private void placeInOut(JSONObject msg) {
         String str = msg.toString();
-        out.println(_START + str + _END);
+        synchronized (out) {
+            out.println(_START + str + _END);
+        }
     }
 
     private void close() {
@@ -243,7 +260,9 @@ public class ThreadJSSocket {
         if (cb == null) {
             cb = Callback.EMPTY;
         }
-        calls.put(reqId, cb);
+        synchronized (calls) {
+            calls.put(reqId, cb);
+        }
         placeInOut(msg);
     }
 }

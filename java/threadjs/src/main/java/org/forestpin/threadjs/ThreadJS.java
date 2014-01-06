@@ -28,6 +28,7 @@ public class ThreadJS {
 
     private void init() {
         socket = new ThreadJSSocket(this, host, port);
+        socket.start();
 
         while (!started) {
             send(PING, new JSONObject(), new Callback() {
@@ -55,6 +56,7 @@ public class ThreadJS {
         }
     }
 
+    //Pararrel  method
     public void onMessage(JSONObject msg, Callback cb) {
         // TODO call the callback obj in case of callback. If not send call the
         // method!
