@@ -18,7 +18,7 @@ public class App {
 
     public static void main(String[] args) {
 
-        ThreadJS node = new ThreadJS();
+        ThreadJS node = new Messager();
         node.onStarted(new Callback() {
             public void callback(String err, JSONObject data) {
                 System.out.println("Server communication is started and initialized successfully.");
