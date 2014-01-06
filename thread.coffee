@@ -31,7 +31,7 @@ class Thread
    @send START, {}, (err, data) =>
     started = true
     if err?
-     console.log "Spawned program starter error: ", err
+     logError "Spawned program starter error: ", err
     else
      @_setMethods data.methods if data.methods?
      @working = true
