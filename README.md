@@ -53,6 +53,4 @@ public class Messager extends ThreadJS {
         }
     }
 }
-```java
-
-
+```
