@@ -1,13 +1,14 @@
 threadjs
 ========
 
-Extendable set of classes written in coffeescript and Java (few more languages to be added) so that coffeescript can call (and spawn) other processes. And also can call other process in similar to calling async methods in an object.
+Extendable set of classes written in coffeescript and Java (few more languages to be added) so that coffeescript can call (and optionally spawn) other processes. And also it can call those processes in similar to calling async methods in an object.
 
 E.g.
 
 In NodeJS program
 -----------------
 
+```coffeescript
 JavaThread = (require './java_thread').JavaThread
 
 javaProgram = new JavaThread
@@ -30,11 +31,12 @@ javaProgram.onStarted (err, data) ->
 
  javaProgram.send 'getRecord', {}, (err, data) ->
   console.log "Java program sent a callback. Java 'getRecord' method is supposed to call the onRecord method here"
-
+```
 
 In Java program
 ---------------
 
+```java
 package org.forestpin.threadjs;
 
 import net.sf.json.JSONObject;
@@ -51,6 +53,6 @@ public class Messager extends ThreadJS {
         }
     }
 }
-
+```java
 
 
