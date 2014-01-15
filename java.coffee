@@ -1,9 +1,9 @@
-JavaThread = (require './java_thread').JavaThread
+SocketThread = (require './socket_thread').SocketThread
 util = (require './util')
 logUser = util.logUser
 util.setId '[NodeJS]'
 
-client = new JavaThread
+client = new SocketThread
  server: true
  spawn: true
  cwd: "./java/threadjs"
@@ -13,7 +13,7 @@ client = new JavaThread
 #  "-Xrunjdwp:transport=dt_socket,address=8999,server=y"
   "-cp"
   "target/uber-threadjs-1.0-SNAPSHOT.jar"
-  "org.forestpin.threadjs.App"
+  "org.forestpin.threadjs.java.App"
  ]
 
 #params: ["exec:java", "-Dexec.mainClass=\"org.forestpin.threadjs.App\""],

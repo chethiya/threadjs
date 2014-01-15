@@ -4,15 +4,16 @@ Thread = (require './thread').Thread
 util = (require './util')
 logError = util.logError
 
-class JavaThread extends Thread
+class SocketThread extends Thread
  constructor: (options) ->
-  @port = options.port
-  @host = options.host
-  @server = options.server
-  @spawn = options.spawn
-  @program = options.program
-  @params = options.params
-  @cwd = options.cwd
+  if options?
+   @port = options.port
+   @host = options.host
+   @server = options.server
+   @spawn = options.spawn
+   @program = options.program
+   @params = options.params
+   @cwd = options.cwd
 
   @connected = false
   @socket = null
@@ -40,4 +41,4 @@ class JavaThread extends Thread
   @socket.send msg, (data) =>
    callback data.err, data.data
 
-exports.JavaThread = JavaThread
+exports.SocketThread = SocketThread

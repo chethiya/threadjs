@@ -1,4 +1,4 @@
-package org.forestpin.threadjs;
+package org.forestpin.threadjs.java;
 
 import java.io.BufferedReader;
 import java.io.IOException;
