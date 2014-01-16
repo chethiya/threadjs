@@ -1,5 +1,5 @@
-ForkThread = (require './fork_thread').ForkThread
-util = (require './util')
+ForkThread = (require './../../fork_thread').ForkThread
+util = (require './../../util')
 util.setId '[Fork Parent]'
 logUser = util.logUser
 
