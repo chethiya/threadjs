@@ -1,12 +1,12 @@
-SocketThread = (require './socket_thread').SocketThread
-util = (require './util')
+SocketThread = (require './../../socket_thread').SocketThread
+util = (require './../../util')
 logUser = util.logUser
 util.setId '[NodeJS]'
 
 client = new SocketThread
  server: true
  spawn: true
- cwd: "./java/threadjs"
+ cwd: "./../../java/threadjs"
  program: "java"
  params: [
 #  "-Xdebug"
