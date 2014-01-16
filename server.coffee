@@ -1,9 +1,9 @@
-JavaThread = (require './../java_thread').JavaThread
-util = (require './../util')
+SocketThread = (require './socket_thread').SocketThread
+util = (require './util')
 util.setId 'Server'
 logUser = util.logUser
 
-server = new JavaThread server: true, spawn: false
+server = new SocketThread server: true, spawn: false
 server.getRecord = (data, callback) ->
  logUser "Data receved"
  logUser data

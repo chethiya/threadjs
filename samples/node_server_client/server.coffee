@@ -1,8 +1,8 @@
-JavaThread = (require './../java_thread').JavaThread
-util = (require './../util')
+SocketThread = (require './../../socket_thread').SocketThread
+util = (require './../../util')
 util.setId 'Server'
 
-server = new JavaThread server: true, spawn: false
+server = new SocketThread server: true, spawn: false
 
 obj = {id: 2, vendor: 'pamona', amount:12123.22, date: '12312013'}
 

@@ -1,6 +1,6 @@
-JavaThread = (require './java_thread').JavaThread
+SocketThread = (require './../../socket_thread').SocketThread
 
-client = new JavaThread server: false, spawn: true
+client = new SocketThread server: false, spawn: false
 client.onRecord = (data, callback) ->
  console.log data
  callback()
