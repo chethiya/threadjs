@@ -1,4 +1,5 @@
 spawn = (require 'child_process').spawn
+fork = (require 'child_process').fork
 util = require './util'
 logError = util.logError
 debug = util.debug
@@ -10,6 +11,7 @@ PING_INTERVAL = 1000
 class Thread
  constructor: ->
   @spwan = true unless @spawn?
+  @fork = false unless @fork?
   @server = true unless @server?
   @program = 'coffee' unless @program?
   @params = ["./node_server/server.coffee"] unless @params?
@@ -26,6 +28,8 @@ class Thread
  _init: ->
   if @spawn
    @process = spawn @program, @params, env: @env, stdio: "inherit", cwd: @cwd
+  else if @fork
+   @process = fork @program, @params, env: @env, cwd: @cwd
 
   start = =>
    @send START, {}, (err, data) =>
