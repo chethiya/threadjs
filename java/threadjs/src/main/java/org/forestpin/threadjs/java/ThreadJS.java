@@ -16,11 +16,11 @@ public class ThreadJS {
     private boolean started = false;
     private Callback startedCb = null;
 
-    ThreadJS() {
+    public ThreadJS() {
         init();
     }
 
-    ThreadJS(String host, int port) {
+    public ThreadJS(String host, int port) {
         this.host = host;
         this.port = port;
         init();

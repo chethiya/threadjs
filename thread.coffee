@@ -20,9 +20,9 @@ class Thread
   @host = "localhost" unless @host?
   @cwd = "./" unless @cwd?
 
-  @started = false
-  @working = false
-  @cbs = []
+  @_started = false
+  @_working = false
+  @_cbs = []
   @_init()
 
  _init: ->
@@ -38,9 +38,9 @@ class Thread
      logError "Spawned program starter error: ", err
     else
      @_setMethods data.methods if data.methods?
-     @working = true
-    for cb in @cbs
-     if not @working
+     @_working = true
+    for cb in @_cbs
+     if not @_working
       cb "Started with errors", {}
      else
       cb()
@@ -77,14 +77,14 @@ class Thread
      cb err, data
 
  onStarted: (cb) ->
-  if @started
-   if not @working
+  if @_started
+   if not @_working
     cb "Started with errors", {}
    else
     cb()
    return true
   else
-   @cbs.push cb
+   @_cbs.push cb
    return false
 
  _ping: (data, callback) ->
