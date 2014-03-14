@@ -10,7 +10,7 @@ PING_INTERVAL = 1000
 
 class Thread
  constructor: ->
-  @spwan = true unless @spawn?
+  @spawn = true unless @spawn?
   @fork = false unless @fork?
   @server = true unless @server?
   @program = 'coffee' unless @program?

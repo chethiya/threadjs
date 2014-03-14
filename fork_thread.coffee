@@ -12,7 +12,7 @@ class ForkThread extends Thread
    @params = opt.params
    @cwd = opt.cwd
 
-  @spwan = false
+  @spawn = false
   @fork = true if @parent? and @parent
   super()
   @connected = false
