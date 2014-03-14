@@ -38,6 +38,7 @@ class ForkThread extends Thread
   @socket.send \
    {method: method, data: data}, \
    (data) ->
-    cb data.err, data.data
+    if cb?
+     cb data.err, data.data
 
 exports.ForkThread = ForkThread
