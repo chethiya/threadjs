@@ -76,40 +76,43 @@ class Socket
 
 
  _onData: (data) ->
-  #TODO socket pause/resume
+  #socket pause/resume
+  @socket.pause()
   @dataBuffer += data.toString()
   @_processBuffer()
+  @socket.resume()
 
  _processBuffer: () ->
-  start = @dataBuffer.indexOf _START
-  end = @dataBuffer.indexOf _END
+  while (true)
+   start = @dataBuffer.indexOf _START
+   end = @dataBuffer.indexOf _END
 
-  if start == -1 && end == -1
-   if @dataBuffer.length > 0
-    logError 'Garbage data', @dataBuffer
-   @dataBuffer = ''
-   return
-  else if start == -1 && end != -1
-   logError 'No start found', @dataBuffer
-   @dataBuffer = ''
-   return
+   if start == -1 && end == -1
+    if @dataBuffer.length > 1 # new line character
+     logError 'Garbage data', @dataBuffer
+    @dataBuffer = ''
+    return
+   else if start == -1 && end != -1
+    logError 'No start found', @dataBuffer
+    @dataBuffer = ''
+    return
 
-  #Start found
-  if end != -1 && end < start
-   logError 'No start found', @dataBuffer
-   @dataBuffer = ''
-   return
+   #Start found
+   if end != -1 && end < start
+    logError 'No start found', @dataBuffer
+    @dataBuffer = ''
+    return
 
-  if end == -1
-   #Loading
-   if start > 0
-    @dataBuffer = @dataBuffer.substr start
-   return
+   if end == -1
+    #Loading
+    if start > 0
+     @dataBuffer = @dataBuffer.substr start
+    return
 
-  msg = @dataBuffer.substr start + _START.length, end - start - _START.length
-  @dataBuffer = @dataBuffer.substr end + _END.length
+   msg = @dataBuffer.substr start + _START.length, end - start - _START.length
+   @dataBuffer = @dataBuffer.substr end + _END.length
 
-  @_onResponse msg
+   @_onResponse msg
 
  _onResponse: (msg) ->
   reqId = 0
