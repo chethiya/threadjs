@@ -12,6 +12,10 @@ class ForkThread extends Thread
    @params = opt.params
    @cwd = opt.cwd
 
+  regex = /\.coffee$/
+  if @program? and (regex.test __filename) and not (regex.test @program)
+   @program += '.coffee'
+
   @spawn = false
   @fork = true if @parent? and @parent
   super()
