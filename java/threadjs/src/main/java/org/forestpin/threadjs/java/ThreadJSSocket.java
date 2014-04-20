@@ -23,13 +23,17 @@ public class ThreadJSSocket {
     private BufferedReader in;
     Thread inThread = null;
 
+    private final MessageThrottler throttler;
+
     private boolean connected = false;
     HashMap<String, Callback> calls = new HashMap<String, Callback>(); // sync
 
-    ThreadJSSocket(ThreadJS main, String host, int port) {
+    ThreadJSSocket(ThreadJS main, String host, int port, int maxThreads) {
         this.main = main;
         this.host = host;
         this.port = port;
+        throttler = new MessageThrottler(maxThreads);
+        throttler.start();
         init();
     }
 
@@ -140,12 +144,15 @@ public class ThreadJSSocket {
                             m.element("reqId", reqId);
                             m.element("data", d);
                             placeInOut(m);
+
+                            // Callback is the point of exit. Therefore we can
+                            // assume at this point thread execution is over
+                            throttler.onThreadExit();
                         }
                     });
                 }
             };
-            newProcess.start();
-
+            throttler.push(newProcess);
         }
     }
 

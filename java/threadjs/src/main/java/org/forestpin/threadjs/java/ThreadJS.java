@@ -17,17 +17,21 @@ public class ThreadJS {
     private Callback startedCb = null;
 
     public ThreadJS() {
-        init();
+        init(1);
     }
 
-    public ThreadJS(String host, int port) {
+    public ThreadJS(int maxThreads) {
+        init(maxThreads);
+    }
+
+    public ThreadJS(String host, int port, int maxThreads) {
         this.host = host;
         this.port = port;
-        init();
+        init(maxThreads);
     }
 
-    private void init() {
-        socket = new ThreadJSSocket(this, host, port);
+    private void init(int maxThreads) {
+        socket = new ThreadJSSocket(this, host, port, maxThreads);
         socket.start();
 
         while (!started) {
@@ -56,7 +60,7 @@ public class ThreadJS {
         }
     }
 
-    //Pararrel  method
+    // Pararrel method
     public void onMessage(JSONObject msg, Callback cb) {
         // TODO call the callback obj in case of callback. If not send call the
         // method!
@@ -121,6 +125,5 @@ public class ThreadJS {
         System.out.println("[java] Start is called");
         cb.callback(null, data);
     }
-
 
 }
