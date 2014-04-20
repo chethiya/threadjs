@@ -1,6 +1,7 @@
 spawn = (require 'child_process').spawn
 fork = (require 'child_process').fork
 util = require './util'
+util.setId 'threadjs'
 logError = util.logError
 debug = util.debug
 

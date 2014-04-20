@@ -17,7 +17,8 @@ logUser = (msg) ->
  console.log "#{cId}[LOG]", msg
 
 logError = (err, data) ->
- console.error "#{cId}[ERROR]#{err}", data
+ console.error "#{cId}[ERROR]#{if err.message? then err.message else err}", data
+ console.error err.stack if err?.stack?
 
 debug = (data) ->
  console.log "#{cId}[DEBUG]", data
