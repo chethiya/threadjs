@@ -88,20 +88,17 @@ class Socket
    end = @dataBuffer.indexOf _END
 
    if start == -1 && end == -1
-    if @dataBuffer.length > 1 # new line character
-     logError 'Garbage data', @dataBuffer
-    @dataBuffer = ''
     return
    else if start == -1 && end != -1
     logError 'No start found', @dataBuffer
-    @dataBuffer = ''
+    @dataBuffer = @dataBuffer.substr end + _END.length
     return
 
    #Start found
    if end != -1 && end < start
     logError 'No start found', @dataBuffer
-    @dataBuffer = ''
-    return
+    @dataBuffer = @dataBuffer.substr start
+    continue
 
    if end == -1
     #Loading
