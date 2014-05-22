@@ -34,7 +34,8 @@ class Thread
 
   start = =>
    @send START, {}, (err, data) =>
-    started = true
+    return if @_started is on
+    @_started = true
     if err?
      logError "Spawned program starter error: ", err
     else
@@ -45,6 +46,7 @@ class Thread
       cb "Started with errors", {}
      else
       cb()
+    @_cbs = []
 
   cid = null
   check = =>
