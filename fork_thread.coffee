@@ -36,7 +36,7 @@ class ForkThread extends Thread
 
  send: (method, data, cb) ->
   if not @connected
-   cb "Socket is not connected", {}
+   cb? "Socket is not connected", {}
    return
 
   @socket.send \
